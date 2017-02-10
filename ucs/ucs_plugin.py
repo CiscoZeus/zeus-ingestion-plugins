@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import argparse
 import logging
 import re
 from xml.etree.ElementTree import XML
@@ -22,13 +22,13 @@ from zeus import client
 
 
 class UCSPlugin(object):
-    def __init__(self, host, user, passwd):
+    def __init__(self):
         super(UCSPlugin, self).__init__()
         self.handlers = {}
 
-        self.url = 'http://%s/nuova' % host
-        self.user = user
-        self.passwd = passwd
+        self.url = ''
+        self.user = ''
+        self.passwd = ''
         self.cookie = ''
         self.session = None
         self.zeus_client = None
@@ -72,6 +72,31 @@ class UCSPlugin(object):
         self.class_ids.extend(self.performance)
         self.class_ids.extend(self.inventory)
 
+    def get_args(self):
+        # read arguments from command line parameters
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-c", "--ucs", nargs="?", type=str, default="0.0.0.0",
+                            help="""IP or host name of unified computing server.
+                                    \n(default: 0.0.0.0)""")
+        parser.add_argument("-u", "--user", nargs="?", type=str,
+                            default="ucspe",
+                            help="User name of UCS. \n(default: ucspe)")
+        parser.add_argument("-p", "--password", nargs="?", type=str,
+                            default="ucspe",
+                            help="Password of UCS \n(default: ucspe)")
+        parser.add_argument("-l", "--log_level", nargs="?", type=str,
+                            default="info",
+                            help="Level of log. \n(default: info)")
+        parser.add_argument("-t", "--token", nargs="?", type=str,
+                            default="",
+                            help="Token of ZEUS API.")
+        parser.add_argument("-z", "--zeus", nargs="?", type=str,
+                            default="127.0.0.1",
+                            help="""IP or host name of ZEUS server.
+                                    \n(default: 127.0.0.1)""")
+        args = parser.parse_args()
+        return args
+
     def check_level(self, loglevel):
         level = getattr(logging, loglevel.upper(), None)
         if not isinstance(level, int):
@@ -92,10 +117,19 @@ class UCSPlugin(object):
         # submit event to zeus
         self.submit_event(name, msg)
 
-    def set_up(self, token, server):
+    def set_up(self):
+        # get arguments
+        self.args = self.get_args()
+        self.url = 'http://%s/nuova' % self.args.ucs
+        self.token = self.args.token
+        self.zeus_server = self.args.zeus
+        self.user = self.args.user
+        self.passwd = self.args.password
+
+        # set log level
+        self.set_loglevel(self.args.log_level)
+
         # set up a Zeus client to submit log to Zeus.
-        self.token = token
-        self.zeus_server = server
         self.zeus_client = client.ZeusClient(self.token, self.zeus_server)
 
         # set up a http client to UCS server.
@@ -135,7 +169,7 @@ class UCSPlugin(object):
         try:
             # update notification in time.
             self.logger.info("subscribe to UCS events")
-            # self.subscribe_events()
+            self.subscribe_events()
         except KeyboardInterrupt:
             self.add_log('info', 'KeyboardInterrupt',
                          msg="KeyboardInterrupt")
@@ -204,9 +238,7 @@ class UCSPlugin(object):
 
 
 if __name__ == "__main__":
-    ucs_plugin = UCSPlugin("172.16.86.142", "ucspe", "ucspe")
-    ucs_plugin.set_loglevel('INFO')
-    ucs_plugin.set_up(token='837t80wepepwvees1oylrpcef80ceteg',
-                      server='https://data04.ciscozeus.io')
+    ucs_plugin = UCSPlugin()
+    ucs_plugin.set_up()
 
     ucs_plugin.close()
