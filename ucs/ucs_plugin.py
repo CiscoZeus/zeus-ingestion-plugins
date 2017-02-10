@@ -111,7 +111,9 @@ class UCSPlugin(object):
             self.add_log('info', 'aaalogin', msg="Login: %s" % res.text)
 
             # get all calsses's data before go into a loop.
-            # self.configResolveClasses(self.class_ids)
+            # self.get_configResolveClasses(self.class_ids)
+            #for class_id in self.class_ids:
+            #    self.get_configResolveClass(class_id, inHierarchical='false')
 
             self.event_loop()
 
@@ -122,9 +124,9 @@ class UCSPlugin(object):
 
         self.add_log('info', 'aaalogout', msg="Logout: %s" % res.text)
 
-    def send_request(self, payload):
+    def send_request(self, payload, json=None, **kwargs):
         # send request to UCS server.
-        return self.session.post(self.url, data=payload)
+        return self.session.post(self.url, data=payload, json=json, **kwargs)
 
     def event_loop(self):
         # Maintain a client to listen to UCS's async notification.
@@ -140,17 +142,22 @@ class UCSPlugin(object):
         finally:
             self.unsubscribe_events()
 
+    def handle_event(self, response, *args, **kwargs):
+        print "event", response.text
+        # self.submit_event(name, msg)
+
     def subscribe_events(self):
         payload = """<eventSubscribe
                      cookie="%s"></eventSubscribe>""" % self.cookie
-        self.send_request(payload)
+        #self.send_request(payload, hooks=dict(response=self.handle_event))
+        requests.post(self.url, payload, hooks=dict(response=self.handle_event))
 
     def unsubscribe_events(self):
         payload = """<eventUnsubscribe
                      cookie="%s"></eventUnsubscribe>""" % self.cookie
         self.send_request(payload)
 
-    def submit_event(self, name, msg, ):
+    def submit_event(self, name, msg):
         # check name: All log names must have only letter and numbers
         if re.match('^[A-Za-z0-9]+$', name):
             # send log to zeus.
@@ -172,7 +179,7 @@ class UCSPlugin(object):
 
         self.add_log('info', 'aaaRefresh', msg="Refresh: %s" % res.text)
 
-    def configResolveClass(self, class_id, inHierarchical='false'):
+    def get_configResolveClass(self, class_id, inHierarchical='false'):
         payload = """<configResolveClass cookie="%s"
                      inHierarchical="%s"
                      classId="%s"/>""" % \
@@ -181,7 +188,7 @@ class UCSPlugin(object):
 
         self.add_log('info', class_id, msg="configResolveClass: %s" % res.text)
 
-    def configResolveClasses(self, class_ids, inHierarchical='false'):
+    def get_configResolveClasses(self, class_ids, inHierarchical='false'):
         class_id_xml = ''
         for id in class_ids:
             class_id_xml += """<Id value="%s"/>""" % id
