@@ -36,6 +36,7 @@ class UCSPlugin(object):
         self.token = ''
 
         self.class_ids = []
+        self.dn_list = set()
         self.fault = ["faultInst"]
 
         self.performance = ["swSystemStats",
@@ -148,7 +149,7 @@ class UCSPlugin(object):
             # self.get_configResolveClasses(self.class_ids)
             #for class_id in self.class_ids:
             #    self.get_configResolveClass(class_id, inHierarchical='false')
-
+            self.get_dn_config()
             self.event_loop()
 
     def close(self):
@@ -169,7 +170,7 @@ class UCSPlugin(object):
         try:
             # update notification in time.
             self.logger.info("subscribe to UCS events")
-            self.subscribe_events()
+            #self.subscribe_events()
         except KeyboardInterrupt:
             self.add_log('info', 'KeyboardInterrupt',
                          msg="KeyboardInterrupt")
@@ -213,6 +214,31 @@ class UCSPlugin(object):
 
         self.add_log('info', 'aaaRefresh', msg="Refresh: %s" % res.text)
 
+    def get_configFindDnsByClassId(self, class_id):
+        payload = """<configFindDnsByClassId
+                    classId="%s"
+                    cookie="%s" />""" % (class_id, self.cookie)
+        return self.send_request(payload)
+
+    def get_Dns(self):
+        for class_id in self.class_ids:
+            res = self.get_configFindDnsByClassId(class_id)
+            tree = XML(res.text)
+
+            for dn in tree.iterfind('outDns/dn'):
+                self.dn_list.add(dn.get('value'))
+
+    def get_configResolveDn(self, dn, inHierarchical='false'):
+        payload = """<configResolveDn dn="%s" cookie="%s"
+                  inHierarchical="%s"/>""" % (dn, self.cookie, inHierarchical)
+        return self.send_request(payload)
+
+    def get_dn_config(self):
+        self.get_Dns()
+        for dn in self.dn_list:
+            res = self.get_configResolveDn(dn)
+            self.submit_event('dnconfig', msg=res.text)
+
     def get_configResolveClass(self, class_id, inHierarchical='false'):
         payload = """<configResolveClass cookie="%s"
                      inHierarchical="%s"
@@ -220,7 +246,7 @@ class UCSPlugin(object):
                   (self.cookie, inHierarchical, class_id)
         res = self.send_request(payload)
 
-        self.add_log('info', class_id, msg="configResolveClass: %s" % res.text)
+        self.add_log('info', class_id, msg=res.text)
 
     def get_configResolveClasses(self, class_ids, inHierarchical='false'):
         class_id_xml = ''
@@ -233,8 +259,7 @@ class UCSPlugin(object):
                   (self.cookie, inHierarchical, class_id_xml)
 
         res = self.send_request(payload)
-        self.add_log('info', "classes",
-                     msg="configResolveClasses: %s" % res.text)
+        self.add_log('info', "classes", msg=res.text)
 
 
 if __name__ == "__main__":
