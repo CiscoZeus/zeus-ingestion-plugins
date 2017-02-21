@@ -17,10 +17,10 @@ import os
 import re
 import threading
 from time import sleep
-from xml.etree.ElementTree import XML
 
 import argparse
-import requests
+from ucsmsdk import ucsmethodfactory
+from ucsmsdk.ucshandle import UcsHandle
 from zeus import client
 
 
@@ -40,7 +40,7 @@ class UCSPlugin(object):
         self.event_log = 'event_log.txt'
 
         self.class_ids = []
-        self.dn_list = set()
+        self.dn_set = set()
         self.fault = ["faultInst"]
 
         self.performance = ["swSystemStats",
@@ -83,18 +83,31 @@ class UCSPlugin(object):
         parser.add_argument("-c", "--ucs", nargs="?", type=str, default="0.0.0.0",
                             help="""IP or host name of unified computing server.
                                     \n(default: 0.0.0.0)""")
+
         parser.add_argument("-u", "--user", nargs="?", type=str,
                             default="ucspe",
                             help="User name of UCS. \n(default: ucspe)")
+
         parser.add_argument("-p", "--password", nargs="?", type=str,
                             default="ucspe",
                             help="Password of UCS \n(default: ucspe)")
+
+        parser.add_argument("-s", "--secure", nargs="?", type=bool,
+                            default=False,
+                            help="Secure of connection. \n(default: False)")
+
+        parser.add_argument("-P", "--port", nargs="?", type=int,
+                            default=80,
+                            help="Port of TCP socket. \n(default: 80)")
+
         parser.add_argument("-l", "--log_level", nargs="?", type=str,
                             default="info",
                             help="Level of log. \n(default: info)")
+
         parser.add_argument("-t", "--token", nargs="?", type=str,
                             default="",
                             help="Token of ZEUS API.")
+
         parser.add_argument("-z", "--zeus", nargs="?", type=str,
                             default="127.0.0.1",
                             help="""IP or host name of ZEUS server.
@@ -114,6 +127,17 @@ class UCSPlugin(object):
                             level=level)
         self.logger = logging.getLogger("USC-Plugin")
 
+    def submit_event(self, name, msg):
+        # check name: All log names must have only letter and numbers
+        if re.match('^[A-Za-z0-9]+$', name):
+            # send log to zeus.
+            msg = [{"message": msg}]
+            self.logger.info(self.zeus_client.sendLog(name, msg))
+        else:
+            self.logger.error("""Name error: %s.
+                              All log names must have only letter
+                              and numbers (A-Za-z0-9).""" % name)
+
     def add_log(self, loglevel, name, msg, *args):
         level = self.check_level(loglevel)
         if self.logger.isEnabledFor(level):
@@ -125,6 +149,7 @@ class UCSPlugin(object):
     def set_up(self):
         # get arguments
         self.args = self.get_args()
+        self.host = self.args.ucs
         self.url = 'http://%s/nuova' % self.args.ucs
         self.token = self.args.token
         self.zeus_server = self.args.zeus
@@ -138,42 +163,44 @@ class UCSPlugin(object):
         self.zeus_client = client.ZeusClient(self.token, self.zeus_server)
 
         # set up a http client to UCS server.
-        with requests.Session() as self.session:
-            payload = """<aaaLogin inName="%s" inPassword="%s"/>""" % \
-                      (self.user, self.passwd)
-            res = self.send_request(payload)
+        self.handler = UcsHandle(self.host, self.user, self.passwd,
+                                 port=self.args.port, secure=self.args.secure)
+        # login to ucs
+        self.handler.login(auto_refresh=True)
+        self.add_log("info", "aaaLogin",
+                     msg="{User:%s, Password:%s, cookie:%s}" % (
+                         self.user, self.passwd, self.handler.cookie))
 
-            tree = XML(res.text)
-            self.cookie = tree.get("outCookie")
+        # get dns configuration
+        for class_id in self.class_ids:
+            xml_req = ucsmethodfactory.config_find_dns_by_class_id(
+                self.handler.cookie, class_id, in_filter=None)
+            self.dn_obj_list = self.handler.process_xml_elem(xml_req)
 
-            self.add_log('info', 'aaalogin', msg="Login: %s" % payload)
-            self.add_log('info', 'aaalogin', msg="Login: %s" % res.text)
-
-            # get all calsses's data before go into a loop.
-            # self.get_configResolveClasses(self.class_ids)
-            # for class_id in self.class_ids:
-            #    self.get_configResolveClass(class_id, inHierarchical='false')
-            self.get_dn_config()
-            self.event_loop()
+            for dn in self.dn_obj_list:
+                #dn_config = self.handler.query_dn(dn.value)
+                #self.add_log("info", dn._class_id, msg=dn_config.__str__())
+                self.dn_set.add(dn.value)
+        self.event_loop()
 
     def close(self):
-        # close the connection
-        payload = """<aaaLogout inCookie="%s"/>""" % self.cookie
-        res = self.send_request(payload)
-
-        self.add_log('info', 'aaalogout', msg="Logout: %s" % res.text)
-
-    def send_request(self, payload, json=None, **kwargs):
-        # send request to UCS server.
-        return self.session.post(self.url, data=payload, json=json, **kwargs)
+        self.unsubscribe_events()
+        self.handler.logout()
+        self.add_log('info', 'aaaLogout',
+                     msg="{User:%s, Password:%s, cookie:%s}" % (
+                         self.user, self.passwd, self.handler.cookie))
 
     def submit_async_events(self):
         with open(self.event_log, 'r+') as f:
             while True:
                 previous = f.tell()
+                print "position", f.tell()
                 size = f.readline()
                 if size == '':
-                    pass
+                    # position reached the end, clear content of log file.
+                    f.truncate(0)
+                    f.seek(0)
+                    print "truncate file."
                 else:
                     content = f.read(int(size))
                     if len(content) < int(size):
@@ -181,6 +208,24 @@ class UCSPlugin(object):
                     else:
                         self.add_log("info", "event", msg=content)
                 sleep(1)
+
+    def subscribe_events(self):
+        try:
+            with open(self.event_log, 'r+') as f:
+                # clean file.
+                f.truncate(0)
+                cmd = """curl -d '<eventSubscribe cookie="%s"/>' %s >> %s""" % (
+                    self.cookie, self.url, self.event_log)
+                os.system(cmd)
+        except KeyboardInterrupt:
+            self.logger.info("KeyboardInterrupt")
+        finally:
+            self.unsubscribe_events()
+
+    def unsubscribe_events(self):
+        xml_req = ucsmethodfactory.event_unsubscribe(self.handler.cookie)
+        res = self.handler.process_xml_elem(xml_req)
+        self.add_log("info", res._class_id, msg=res.__str__())
 
     def event_loop(self):
         # Maintain a client to listen to UCS's async notification.
@@ -198,96 +243,7 @@ class UCSPlugin(object):
         while threading.activeCount() > 0:
             sleep(1)
 
-    def subscribe_events(self):
-        try:
-            with open(self.event_log, 'r+') as f:
-                # clean file.
-                f.truncate(0)
-                cmd = """curl -d '<eventSubscribe cookie="%s"/>' %s >> %s""" % (
-                    self.cookie, self.url, self.event_log)
-                os.system(cmd)
-        except KeyboardInterrupt:
-            self.logger.info("KeyboardInterrupt")
-        finally:
-            self.unsubscribe_events()
-
-    def unsubscribe_events(self):
-        payload = """<eventUnsubscribe
-                     cookie="%s"></eventUnsubscribe>""" % self.cookie
-        self.send_request(payload)
-
-    def submit_event(self, name, msg):
-        # check name: All log names must have only letter and numbers
-        if re.match('^[A-Za-z0-9]+$', name):
-            # send log to zeus.
-            msg = [{"message": msg}]
-            self.logger.info(self.zeus_client.sendLog(name, msg))
-        else:
-            self.logger.error("""Name error: %s.
-                              All log names must have only letter
-                              and numbers (A-Za-z0-9).""" % name)
-
-    def refresh_session(self):
-        # refresh the session to UCS server.
-        payload = """< aaaRefresh inName="%s" inPassword="%s"
-                  inCookie="%s"/ >""" % (self.user, self.passwd, self.cookie)
-
-        res = self.send_request(payload)
-        tree = XML(res.text)
-        self.cookie = tree.get("outCookie")
-
-        self.add_log('info', 'aaaRefresh', msg="Refresh: %s" % res.text)
-
-    def get_configFindDnsByClassId(self, class_id):
-        payload = """<configFindDnsByClassId
-                    classId="%s"
-                    cookie="%s" />""" % (class_id, self.cookie)
-        return self.send_request(payload)
-
-    def get_Dns(self):
-        for class_id in self.class_ids:
-            res = self.get_configFindDnsByClassId(class_id)
-            tree = XML(res.text)
-
-            for dn in tree.iterfind('outDns/dn'):
-                self.dn_list.add(dn.get('value'))
-
-    def get_configResolveDn(self, dn, inHierarchical='false'):
-        payload = """<configResolveDn dn="%s" cookie="%s"
-                  inHierarchical="%s"/>""" % (dn, self.cookie, inHierarchical)
-        return self.send_request(payload)
-
-    def get_dn_config(self):
-        self.get_Dns()
-        for dn in self.dn_list:
-            res = self.get_configResolveDn(dn)
-            self.submit_event('dnconfig', msg=res.text)
-
-    def get_configResolveClass(self, class_id, inHierarchical='false'):
-        payload = """<configResolveClass cookie="%s"
-                     inHierarchical="%s"
-                     classId="%s"/>""" % \
-                  (self.cookie, inHierarchical, class_id)
-        res = self.send_request(payload)
-
-        self.add_log('info', class_id, msg=res.text)
-
-    def get_configResolveClasses(self, class_ids, inHierarchical='false'):
-        class_id_xml = ''
-        for id in class_ids:
-            class_id_xml += """<Id value="%s"/>""" % id
-
-        payload = """<configResolveClasses cookie = "%s"
-                      inHierarchical = "%s">
-                      <inIds> %s</inIds></configResolveClasses>""" % \
-                  (self.cookie, inHierarchical, class_id_xml)
-
-        res = self.send_request(payload)
-        self.add_log('info', "classes", msg=res.text)
-
-
 if __name__ == "__main__":
     ucs_plugin = UCSPlugin()
     ucs_plugin.set_up()
-
     ucs_plugin.close()
