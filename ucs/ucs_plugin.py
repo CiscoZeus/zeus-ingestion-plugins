@@ -194,13 +194,11 @@ class UCSPlugin(object):
         with open(self.event_log, 'r+') as f:
             while True:
                 previous = f.tell()
-                print "position", f.tell()
                 size = f.readline()
                 if size == '':
                     # position reached the end, clear content of log file.
                     f.truncate(0)
                     f.seek(0)
-                    print "truncate file."
                 else:
                     content = f.read(int(size))
                     if len(content) < int(size):
