@@ -121,7 +121,7 @@ class UCSPlugin(object):
             raise ValueError('Invalid log level: %s' % loglevel)
         return level
 
-    def set_loglevel(self, loglevel):
+    def set_log_level(self, loglevel):
         level = self.check_level(loglevel)
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             level=level)
@@ -146,32 +146,7 @@ class UCSPlugin(object):
         # submit event to zeus
         self.submit_event(name, msg)
 
-    def set_up(self):
-        # get arguments
-        self.args = self.get_args()
-        self.host = self.args.ucs
-        self.url = 'http://%s/nuova' % self.args.ucs
-        self.token = self.args.token
-        self.zeus_server = self.args.zeus
-        self.user = self.args.user
-        self.passwd = self.args.password
-
-        # set log level
-        self.set_loglevel(self.args.log_level)
-
-        # set up a Zeus client to submit log to Zeus.
-        self.zeus_client = client.ZeusClient(self.token, self.zeus_server)
-
-        # set up a http client to UCS server.
-        self.handler = UcsHandle(self.host, self.user, self.passwd,
-                                 port=self.args.port, secure=self.args.secure)
-        # login to ucs
-        self.handler.login(auto_refresh=True)
-        self.add_log("info", "aaaLogin",
-                     msg="{User:%s, Password:%s, cookie:%s}" % (
-                         self.user, self.passwd, self.handler.cookie))
-
-        # get dns configuration
+    def get_dn_conf(self):
         for class_id in self.class_ids:
             xml_req = ucsmethodfactory.config_find_dns_by_class_id(
                 self.handler.cookie, class_id, in_filter=None)
@@ -181,13 +156,6 @@ class UCSPlugin(object):
                 dn_config = self.handler.query_dn(dn.value)
                 self.add_log("info", dn._class_id, msg=dn_config.__str__())
                 self.dn_set.add(dn.value)
-        self.event_loop()
-
-    def close(self):
-        self.handler.logout()
-        self.add_log('info', 'aaaLogout',
-                     msg="{User:%s, Password:%s, cookie:%s}" % (
-                         self.user, self.passwd, self.handler.cookie))
 
     def submit_async_events(self, response):
         self.event_string += response
@@ -233,6 +201,40 @@ class UCSPlugin(object):
             self.logger.info("KeyboardInterrupt")
         finally:
             self.unsubscribe_events()
+
+    def set_up(self):
+        # get arguments
+        self.args = self.get_args()
+        self.host = self.args.ucs
+        self.url = 'http://%s/nuova' % self.args.ucs
+        self.token = self.args.token
+        self.zeus_server = self.args.zeus
+        self.user = self.args.user
+        self.passwd = self.args.password
+
+        # set log level
+        self.set_log_level(self.args.log_level)
+
+        # set up a Zeus client to submit log to Zeus.
+        self.zeus_client = client.ZeusClient(self.token, self.zeus_server)
+
+        # set up a http client to UCS server.
+        self.handler = UcsHandle(self.host, self.user, self.passwd,
+                                 port=self.args.port, secure=self.args.secure)
+        # login to ucs
+        self.handler.login(auto_refresh=True)
+        self.add_log("info", "aaaLogin",
+                     msg="{User:%s, Password:%s, cookie:%s}" % (
+                         self.user, self.passwd, self.handler.cookie))
+
+        self.get_dn_conf()
+        self.event_loop()
+
+    def close(self):
+        self.handler.logout()
+        self.add_log('info', 'aaaLogout',
+                     msg="{User:%s, Password:%s, cookie:%s}" % (
+                         self.user, self.passwd, self.handler.cookie))
 
 
 if __name__ == "__main__":
