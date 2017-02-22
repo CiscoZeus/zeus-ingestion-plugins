@@ -127,7 +127,7 @@ class UCSPlugin(object):
                             level=level)
         self.logger = logging.getLogger("USC-Plugin")
 
-    def submit_event(self, name, msg):
+    def submit(self, name, msg):
         # check name: All log names must have only letter and numbers
         if re.match('^[A-Za-z0-9]+$', name):
             # send log to zeus.
@@ -143,8 +143,8 @@ class UCSPlugin(object):
         if self.logger.isEnabledFor(level):
             self.logger._log(level, msg, args)
 
-        # submit event to zeus
-        self.submit_event(name, msg)
+        # submit data to zeus
+        self.submit(name, msg)
 
     def get_dn_conf(self):
         for class_id in self.class_ids:
@@ -165,7 +165,7 @@ class UCSPlugin(object):
             event_str = str_list[1]
             if len(event_str) >= length:
                 event = event_str[:length]
-                self.add_log("info", "event", msg=event)
+                self.add_log("info", "event", event)
                 # new event string starts from the end of last event.
                 self.event_string = event_str[length:]
             else:
@@ -207,10 +207,11 @@ class UCSPlugin(object):
         self.args = self.get_args()
         self.host = self.args.ucs
         self.url = 'http://%s/nuova' % self.args.ucs
-        self.token = self.args.token
-        self.zeus_server = self.args.zeus
         self.user = self.args.user
         self.passwd = self.args.password
+
+        self.token = self.args.token
+        self.zeus_server = self.args.zeus
 
         # set log level
         self.set_log_level(self.args.log_level)
