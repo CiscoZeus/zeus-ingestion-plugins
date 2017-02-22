@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import os
+import pycurl
 import re
 import threading
 from time import sleep
@@ -27,17 +27,17 @@ from zeus import client
 class UCSPlugin(object):
     def __init__(self):
         super(UCSPlugin, self).__init__()
-        self.threads = []
-
         self.url = ''
         self.user = ''
         self.passwd = ''
         self.cookie = ''
-        self.session = None
+
         self.zeus_client = None
         self.zeus_server = ''
         self.token = ''
-        self.event_log = 'event_log.txt'
+
+        self.listener = None
+        self.event_string = ''
 
         self.class_ids = []
         self.dn_set = set()
@@ -178,47 +178,42 @@ class UCSPlugin(object):
             self.dn_obj_list = self.handler.process_xml_elem(xml_req)
 
             for dn in self.dn_obj_list:
-                #dn_config = self.handler.query_dn(dn.value)
-                #self.add_log("info", dn._class_id, msg=dn_config.__str__())
+                dn_config = self.handler.query_dn(dn.value)
+                self.add_log("info", dn._class_id, msg=dn_config.__str__())
                 self.dn_set.add(dn.value)
         self.event_loop()
 
     def close(self):
-        self.unsubscribe_events()
         self.handler.logout()
         self.add_log('info', 'aaaLogout',
                      msg="{User:%s, Password:%s, cookie:%s}" % (
                          self.user, self.passwd, self.handler.cookie))
 
-    def submit_async_events(self):
-        with open(self.event_log, 'r+') as f:
-            while True:
-                previous = f.tell()
-                size = f.readline()
-                if size == '':
-                    # position reached the end, clear content of log file.
-                    f.truncate(0)
-                    f.seek(0)
-                else:
-                    content = f.read(int(size))
-                    if len(content) < int(size):
-                        f.seek(previous)
-                    else:
-                        self.add_log("info", "event", msg=content)
-                sleep(1)
+    def submit_async_events(self, response):
+        self.event_string += response
+        while len(self.event_string) > 0:
+            str_list = self.event_string.split("\n", 1)
+            length = int(str_list[0])
+            event_str = str_list[1]
+            if len(event_str) >= length:
+                event = event_str[:length]
+                self.add_log("info", "event", msg=event)
+                # new event string starts from the end of last event.
+                self.event_string = event_str[length:]
+            else:
+                # wait for entire content.
+                break
 
     def subscribe_events(self):
-        try:
-            with open(self.event_log, 'r+') as f:
-                # clean file.
-                f.truncate(0)
-                cmd = """curl -d '<eventSubscribe cookie="%s"/>' %s >> %s""" % (
-                    self.cookie, self.url, self.event_log)
-                os.system(cmd)
-        except KeyboardInterrupt:
-            self.logger.info("KeyboardInterrupt")
-        finally:
-            self.unsubscribe_events()
+        self.listener = pycurl.Curl()
+
+        post_data = """<eventSubscribe cookie="%s"/>""" % self.cookie
+        self.listener.setopt(self.listener.POSTFIELDS, post_data)
+        self.listener.setopt(self.listener.URL, self.url)
+        self.listener.setopt(self.listener.WRITEFUNCTION,
+                             self.submit_async_events)
+
+        self.listener.perform()
 
     def unsubscribe_events(self):
         xml_req = ucsmethodfactory.event_unsubscribe(self.handler.cookie)
@@ -227,19 +222,18 @@ class UCSPlugin(object):
 
     def event_loop(self):
         # Maintain a client to listen to UCS's async notification.
-        # when receive data, sent them to zeus.
-        submit_thread = threading.Thread(target=self.submit_async_events, name="submit thread")
-        self.threads.append(submit_thread)
+        # when receive events, sent them to zeus.
+        try:
+            self.sub_thread = threading.Thread(target=self.subscribe_events)
+            self.sub_thread.setDaemon(True)
+            self.sub_thread.start()
+            while threading.activeCount() > 0:
+                sleep(1)
+        except KeyboardInterrupt:
+            self.logger.info("KeyboardInterrupt")
+        finally:
+            self.unsubscribe_events()
 
-        sub_thread = threading.Thread(target=self.subscribe_events, name="subscribing thread")
-        self.threads.append(sub_thread)
-
-        for t in self.threads:
-            t.setDaemon(True)
-            t.start()
-
-        while threading.activeCount() > 0:
-            sleep(1)
 
 if __name__ == "__main__":
     ucs_plugin = UCSPlugin()
