@@ -131,12 +131,12 @@ class UCSPlugin(object):
         # check name: All log names must have only letter and numbers
         if re.match('^[A-Za-z0-9]+$', name):
             # send log to zeus.
-            msg = [{"message": msg}]
-            self.logger.info(self.zeus_client.sendLog(name, msg))
+            return self.zeus_client.sendLog(name, [{"message": msg}])
         else:
             self.logger.error("""Name error: %s.
                               All log names must have only letter
                               and numbers (A-Za-z0-9).""" % name)
+            return None
 
     def add_log(self, loglevel, name, msg, *args):
         level = self.check_level(loglevel)
@@ -144,7 +144,7 @@ class UCSPlugin(object):
             self.logger._log(level, msg, args)
 
         # submit data to zeus
-        self.submit(name, msg)
+        return self.submit(name, msg)
 
     def get_dn_conf(self):
         for class_id in self.class_ids:
