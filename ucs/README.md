@@ -89,7 +89,7 @@ UCS plugin also supports to listen to UCS's events, and submit them to Zeus serv
 
 ## Copyright
 ####Copyright
-Copyright(C) 2017- @muzixing
+Copyright(C) 2017 - @Cisco
 
 ####License
 Apache License, Version 2.0
