@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
 import pycurl
 import re
@@ -19,8 +20,12 @@ import threading
 from time import sleep
 
 import argparse
+import xmltodict
+from ucsmsdk import ucsgenutils
 from ucsmsdk import ucsmethodfactory
 from ucsmsdk.ucshandle import UcsHandle
+from ucsmsdk.ucsmethod import ExternalMethod
+from ucsmsdk.ucsmo import ManagedObject
 from zeus import client
 
 
@@ -146,6 +151,28 @@ class UCSPlugin(object):
         # submit data to zeus
         return self.submit(name, msg)
 
+    def to_json(self, dn):
+        # return the json dict
+        dict = {'class_id': dn._class_id}
+        for prop, prop_value in sorted(ucsgenutils.iteritems(dn.__dict__)):
+            filter = ManagedObject.__dict__['_ManagedObject__internal_prop']
+            if prop in filter or prop.startswith("_ManagedObject__"):
+                continue
+            if isinstance(dn, ExternalMethod):
+                if "ExternalMethod" in prop:
+                    continue
+                else:
+                    dict[prop] = prop_value
+            if isinstance(dn, ManagedObject):
+                if prop in dn.__dict__['_ManagedObject__xtra_props']:
+                    del dict[prop]
+                    prop = "[X]" + str(prop)
+                    dict[prop] = prop_value
+                else:
+                    dict[prop] = prop_value
+
+        return dict
+
     def get_dn_conf(self):
         for class_id in self.class_ids:
             xml_req = ucsmethodfactory.config_find_dns_by_class_id(
@@ -154,7 +181,9 @@ class UCSPlugin(object):
 
             for dn in self.dn_obj_list:
                 dn_config = self.handler.query_dn(dn.value)
-                self.add_log("info", dn._class_id, msg=dn_config.__str__())
+
+                # use the self.to_json temporary until ucsmsdk provides this method.
+                self.add_log("info", dn._class_id, msg=self.to_json(dn_config))
                 self.dn_set.add(dn.value)
 
     def submit_async_events(self, response):
@@ -165,7 +194,10 @@ class UCSPlugin(object):
             event_str = str_list[1]
             if len(event_str) >= length:
                 event = event_str[:length]
-                self.add_log("info", "event", event)
+
+                # convert xml str to json and send to zeus.
+                self.add_log("info", "event", json.dumps(xmltodict.parse(event)))
+
                 # new event string starts from the end of last event.
                 self.event_string = event_str[length:]
             else:
@@ -186,7 +218,7 @@ class UCSPlugin(object):
     def unsubscribe_events(self):
         xml_req = ucsmethodfactory.event_unsubscribe(self.handler.cookie)
         res = self.handler.process_xml_elem(xml_req)
-        self.add_log("info", res._class_id, msg=res.__str__())
+        self.add_log("info", res._class_id, msg=self.to_json(res))
 
     def event_loop(self):
         # Maintain a client to listen to UCS's async notification.
