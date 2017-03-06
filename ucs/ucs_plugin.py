@@ -107,7 +107,8 @@ class UCSPlugin(object):
 
         parser.add_argument("-l", "--log_level", nargs="?", type=str,
                             default="info",
-                            help="Level of log. \n(default: info)")
+                            help="Level of log: CRITICAL, ERROR, WARN, WARNING,"
+                                 "INFO, DEBUG, NOTSET \n(default: INFO)")
 
         parser.add_argument("-t", "--token", nargs="?", type=str,
                             default="",
