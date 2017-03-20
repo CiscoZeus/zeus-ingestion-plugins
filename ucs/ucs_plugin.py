@@ -137,7 +137,7 @@ class UCSPlugin(object):
         # check name: All log names must have only letter and numbers
         if re.match('^[A-Za-z0-9]+$', name):
             # send log to zeus.
-            return self.zeus_client.sendLog(name, [{"message": msg}])
+            return self.zeus_client.sendLog(name, [msg])
         else:
             self.logger.error("""Name error: %s.
                               All log names must have only letter
@@ -258,17 +258,16 @@ class UCSPlugin(object):
         # login to ucs
         self.handler.login(auto_refresh=True)
         self.add_log("info", "aaaLogin",
-                     msg="{User:%s, Password:%s, cookie:%s}" % (
-                         self.user, self.passwd, self.handler.cookie))
-
+                     msg={"User": self.user, "Password": self.passwd,
+                          "cookie": self.handler.cookie})
         self.get_dn_conf()
         self.event_loop()
 
     def close(self):
         self.handler.logout()
         self.add_log('info', 'aaaLogout',
-                     msg="{User:%s, Password:%s, cookie:%s}" % (
-                         self.user, self.passwd, self.handler.cookie))
+                     msg={"User": self.user, "Password": self.passwd,
+                          "cookie": self.handler.cookie})
 
 
 if __name__ == "__main__":
