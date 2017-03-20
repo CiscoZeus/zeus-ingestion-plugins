@@ -133,7 +133,7 @@ class UCSPlugin(object):
                             level=level)
         self.logger = logging.getLogger("USC-Plugin")
 
-    def submit(self, name, msg):
+    def submit(self, msg, name="ucs"):
         # check name: All log names must have only letter and numbers
         if re.match('^[A-Za-z0-9]+$', name):
             # send log to zeus.
@@ -150,7 +150,7 @@ class UCSPlugin(object):
             self.logger._log(level, msg, args)
 
         # submit data to zeus
-        return self.submit(name, msg)
+        return self.submit(msg)
 
     def to_json(self, dn):
         # return the json dict
