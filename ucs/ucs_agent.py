@@ -169,7 +169,7 @@ class UCSAgent(object):
                     dict[prop] = prop_value
 
             return dict
-                
+
         if isinstance(dn, ManagedObject):
             for prop, prop_value in sorted(ucsgenutils.iteritems(dn.__dict__)):
                 filter = ManagedObject.__dict__['_ManagedObject__internal_prop']
