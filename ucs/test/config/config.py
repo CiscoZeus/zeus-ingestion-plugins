@@ -1,4 +1,4 @@
-UCS = '172.16.86.153'
+UCS = "172.16.86.153"
 UCS_USER = 'ucspe'
 UCS_PASSWD = 'ucspe'
 IS_SECURE = False
