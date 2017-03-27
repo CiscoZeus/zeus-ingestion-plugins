@@ -28,7 +28,7 @@ from ucsmsdk.ucsmethod import ExternalMethod
 from ucsmsdk.ucsmo import ManagedObject
 from zeus import client
 
-from config import UCS, UCS_USER, UCS_PASSWD, IS_SECURE, PORT, LOG_LEVEL, ZEUS_TOKEN, ZEUS_SERVER
+import config as conf
 
 
 class UCSAgent(object):
@@ -87,39 +87,39 @@ class UCSAgent(object):
     def get_args(self):
         # read arguments from command line parameters
         parser = argparse.ArgumentParser()
-        parser.add_argument("-c", "--ucs", nargs="?", type=str, default=UCS,
+        parser.add_argument("-c", "--ucs", nargs="?", type=str, default=conf.UCS,
                             help="""IP or host name of unified computing system manager server.
-                                    \n(default: %s)""" %UCS)
+                                    \n(default: %s)""" % conf.UCS)
 
         parser.add_argument("-u", "--user", nargs="?", type=str,
-                            default=UCS_USER,
-                            help="User name of UCS. \n(default: %s)" % UCS_USER)
+                            default=conf.UCS_USER,
+                            help="User name of UCS. \n(default: %s)" % conf.UCS_USER)
 
         parser.add_argument("-p", "--password", nargs="?", type=str,
-                            default=UCS_PASSWD,
-                            help="Password of UCS \n(default: %s)" % UCS_PASSWD)
+                            default=conf.UCS_PASSWD,
+                            help="Password of UCS \n(default: %s)" % conf.UCS_PASSWD)
 
         parser.add_argument("-s", "--secure", nargs="?", type=bool,
-                            default=IS_SECURE,
-                            help="Secure of connection. \n(default: %s)" % IS_SECURE)
+                            default=conf.IS_SECURE,
+                            help="Secure of connection. \n(default: %s)" % conf.IS_SECURE)
 
         parser.add_argument("-P", "--port", nargs="?", type=int,
-                            default=PORT,
-                            help="Port of TCP socket. \n(default: %d)" % PORT)
+                            default=conf.PORT,
+                            help="Port of TCP socket. \n(default: %d)" % conf.PORT)
 
         parser.add_argument("-l", "--log_level", nargs="?", type=str,
-                            default=LOG_LEVEL,
+                            default=conf.LOG_LEVEL,
                             help="Level of log: CRITICAL, ERROR, WARN, WARNING,"
-                                 "INFO, DEBUG, NOTSET \n(default: %s)" % LOG_LEVEL)
+                                 "INFO, DEBUG, NOTSET \n(default: %s)" % conf.LOG_LEVEL)
 
         parser.add_argument("-t", "--token", nargs="?", type=str,
-                            default=ZEUS_TOKEN,
+                            default=conf.ZEUS_TOKEN,
                             help="Token of ZEUS API.")
 
         parser.add_argument("-z", "--zeus", nargs="?", type=str,
-                            default=ZEUS_SERVER,
+                            default=conf.ZEUS_SERVER,
                             help="""IP or host name of ZEUS server.
-                                    \n(default: %s)""" % ZEUS_SERVER)
+                                    \n(default: %s)""" % conf.ZEUS_SERVER)
         args = parser.parse_args()
         return args
 
