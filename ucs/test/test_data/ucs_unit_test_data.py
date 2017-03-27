@@ -1,29 +1,13 @@
 class_ids = ["faultInst", "123", "-34", "cv wr"]
 
-dn_str = """ Managed Object			:	FaultInst
-                --------------
-                ack                             :no
-                cause                           :activation-failed
-                change_set                      :
-                child_action                    :None
-                code                            :F0856
-                created                         :2017-02-16T20:17:28.343
-                descr                           :Activation failed and Activate Status set to failed.
-                dn                              :sys/chassis-2/cartridge-2/server-2/mgmt/fw-boot-def/bootunit-combined/fault-F0856
-                highest_severity                :major
-                id                              :52258
-                last_transition                 :2017-02-16T20:17:28.343
-                lc                              :
-                occur                           :1
-                orig_severity                   :major
-                prev_severity                   :major
-                rn                              :fault-F0856
-                rule                            :firmware-boot-unit-activate-status-failed
-                sacl                            :None
-                severity                        :major
-                status                          :None
-                tags                            :network,server
-                type                            :management"""
+dn_dict = {'status': None, 'code': 'F0856', 'sacl': None, 'prev_severity': 'major', 'occur': '1', 'child_action': None,
+          'last_transition': '2017-02-16T20:17:28.343', 'lc': '',
+          'descr': 'Activation failed and Activate Status set to failed.', 'orig_severity': 'major', 'id': '52258',
+          'rn': 'fault-F0856', 'cause': 'activation-failed',
+          'dn': 'sys/chassis-2/cartridge-2/server-2/mgmt/fw-boot-def/bootunit-combined/fault-F0856',
+          'tags': 'network,server', 'highest_severity': 'major', 'severity': 'major',
+          'created': '2017-02-16T20:17:28.343', 'class_id': 'FaultInst', 'type': 'management', 'change_set': '',
+          'rule': 'firmware-boot-unit-activate-status-failed', 'ack': 'no'}
 
 event_str_list = []
 
