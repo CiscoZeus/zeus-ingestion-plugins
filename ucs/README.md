@@ -32,7 +32,7 @@ UCS agent supports to collect data from Cisco Unified Computing System manager s
 ## Configuration
 #### Configuration can be done by config file or CLI.
 
-There are two ways to configure UCS agent, by config.py and CLI. If we don't specified arguments by CLI, the arguments will use the default value from config.py. 
+There are two ways to configure UCS agent, by config.py and CLI. If we don't specified arguments by CLI, the argument will be the default value which has been defined by config.py. 
 
 * Config.py
     
