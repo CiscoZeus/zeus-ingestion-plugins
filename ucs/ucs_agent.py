@@ -157,24 +157,32 @@ class UCSAgent(object):
     def to_json(self, dn):
         # return the json dict
         dict = {'class_id': dn._class_id}
-        for prop, prop_value in sorted(ucsgenutils.iteritems(dn.__dict__)):
-            filter = ManagedObject.__dict__['_ManagedObject__internal_prop']
-            if prop in filter or prop.startswith("_ManagedObject__"):
-                continue
-            if isinstance(dn, ExternalMethod):
+        if isinstance(dn, ExternalMethod):
+            for prop, prop_value in sorted(ucsgenutils.iteritems(dn.__dict__)):
+                filter = ManagedObject.__dict__['_ManagedObject__internal_prop']
+                if prop in filter or prop.startswith("_ManagedObject__"):
+                    continue
+
                 if "ExternalMethod" in prop:
                     continue
                 else:
                     dict[prop] = prop_value
-            if isinstance(dn, ManagedObject):
+
+            return dict
+                
+        if isinstance(dn, ManagedObject):
+            for prop, prop_value in sorted(ucsgenutils.iteritems(dn.__dict__)):
+                filter = ManagedObject.__dict__['_ManagedObject__internal_prop']
+                if prop in filter or prop.startswith("_ManagedObject__"):
+                    continue
+
                 if prop in dn.__dict__['_ManagedObject__xtra_props']:
-                    del dict[prop]
                     prop = "[X]" + str(prop)
                     dict[prop] = prop_value
                 else:
                     dict[prop] = prop_value
 
-        return dict
+            return dict
 
     def get_dn_conf(self):
         for class_id in self.class_ids:
