@@ -27,7 +27,7 @@ UCS agent supports to collect data from Cisco Unified Computing System manager s
 
 ## Installation
  
- We don't need to install ucs_agent, and just run it directly with CLI.
+ There is no need to install ucs_agent, just download it and run it directly.
 
 ## Configuration
 #### Configuration can be done by config file or CLI.
