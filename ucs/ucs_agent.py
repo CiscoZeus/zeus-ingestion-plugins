@@ -86,7 +86,7 @@ class UCSAgent(object):
         # read arguments from command line parameters
         parser = argparse.ArgumentParser()
         parser.add_argument("-c", "--ucs", nargs="?", type=str, default="0.0.0.0",
-                            help="""IP or host name of unified computing server.
+                            help="""IP or host name of unified computing system manager server.
                                     \n(default: 0.0.0.0)""")
 
         parser.add_argument("-u", "--user", nargs="?", type=str,
