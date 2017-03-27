@@ -1,7 +1,7 @@
-# UCS(Unified Computing System) Plugin
+# UCS(Unified Computing System) Agent
 
 
-UCS plugin supports to collect data from Cisco Unified Computing System manager server.
+UCS agent supports to collect data from Cisco Unified Computing System manager server.
 
 ## Dependencies
 
@@ -27,12 +27,12 @@ UCS plugin supports to collect data from Cisco Unified Computing System manager 
 
 ## Installation
  
- We don't need to install ucs_plugin, and just run it directly with CLI.
+ We don't need to install ucs_agent, and just run it directly with CLI.
 
 ## Configuration
 #### Configuration can be done by CLI.
     
-    usage: ucs_plugin.py [-h] [-c [UCS]] [-u [USER]] [-p [PASSWORD]] [-s [SECURE]]
+    usage: ucs_agent.py [-h] [-c [UCS]] [-u [USER]] [-p [PASSWORD]] [-s [SECURE]]
                          [-P [PORT]] [-l [LOG_LEVEL]] [-t [TOKEN]] [-z [ZEUS]]
     
     optional arguments:
@@ -58,7 +58,7 @@ UCS plugin supports to collect data from Cisco Unified Computing System manager 
 
 
 ## Collected Data
-UCS plugin collects many kinds of data, including:
+UCS agent collects many kinds of data, including:
 
 * fault
     * faultInst
@@ -97,7 +97,7 @@ UCS plugin collects many kinds of data, including:
 
 ##Event listening
 
-UCS plugin also supports to listen to UCS's asynchronous events, and submit them to Zeus server.
+UCS agent also supports to listen to UCS's asynchronous events, and submit them to Zeus server.
 
 ## Copyright
 ####Copyright

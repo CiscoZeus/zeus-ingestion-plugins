@@ -29,9 +29,9 @@ from ucsmsdk.ucsmo import ManagedObject
 from zeus import client
 
 
-class UCSPlugin(object):
+class UCSAgent(object):
     def __init__(self):
-        super(UCSPlugin, self).__init__()
+        super(UCSAgent, self).__init__()
         self.url = ''
         self.user = ''
         self.passwd = ''
@@ -131,7 +131,7 @@ class UCSPlugin(object):
         level = self.check_level(loglevel)
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             level=level)
-        self.logger = logging.getLogger("USC-Plugin")
+        self.logger = logging.getLogger("USC-Agent")
 
     def submit(self, msg, name="ucs"):
         # check name: All log names must have only letter and numbers
@@ -271,6 +271,6 @@ class UCSPlugin(object):
 
 
 if __name__ == "__main__":
-    ucs_plugin = UCSPlugin()
+    ucs_plugin = UCSAgent()
     ucs_plugin.set_up()
     ucs_plugin.close()
