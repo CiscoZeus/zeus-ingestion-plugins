@@ -38,7 +38,7 @@ UCS agent supports to collect data from Cisco Unified Computing System manager s
     optional arguments:
       -h, --help            show this help message and exit
       -c [UCS], --ucs [UCS]
-                            IP or host name of unified computing server. (default:
+                            IP or host name of unified computing system manager server. (default:
                             0.0.0.0)
       -u [USER], --user [USER]
                             User name of UCS. (default: ucspe)
