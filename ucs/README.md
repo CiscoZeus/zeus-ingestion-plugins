@@ -5,6 +5,7 @@ UCS agent supports to collect data from Cisco Unified Computing System manager s
 
 ## Dependencies
 
+Before using UCS agent, there are some dependencies need to be installed.
 
 * [pycurl](http://pycurl.io/)
 
