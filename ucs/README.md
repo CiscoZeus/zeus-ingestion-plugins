@@ -45,7 +45,7 @@ There are two ways to configure UCS agent, by config.py and CLI. If we don't spe
         UCS_USER = 'ucspe'
         UCS_PASSWD = 'ucspe'
         IS_SECURE = True
-        PORT = 80
+        PORT = 443
         LOG_LEVEL = 'INFO'
         
         ZEUS_TOKEN = "abcde437t80wepepwvees1oylrpcef80"
