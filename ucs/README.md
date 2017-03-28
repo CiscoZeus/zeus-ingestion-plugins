@@ -66,9 +66,9 @@ There are two ways to configure UCS agent, by config.py and CLI. If we don't spe
           -p [PASSWORD], --password [PASSWORD]
                                 Password of UCS (default: ucspe)
           -s [SECURE], --secure [SECURE]
-                                Secure of connection. (default: False)
+                                Secure of connection. (default: True)
           -P [PORT], --port [PORT]
-                                Port of TCP socket. (default: 80)
+                                Port of TCP socket. (default: 443)
           -l [LOG_LEVEL], --log_level [LOG_LEVEL]
                                 Level of log: CRITICAL, ERROR, WARN, WARNING, INFO,
                                 DEBUG, NOTSET (default: INFO)
