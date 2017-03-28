@@ -1,7 +1,7 @@
 # UCS(Unified Computing System) Agent
 
 
-UCS agent supports to collect data from Cisco Unified Computing System manager server. First of all, UCS agent will retrieve the data of UCS objects by Distinguished name(Dn) and send them to Zeus server. After retrieving data, UCS agent will listen to UCS's asynchronous events, and submit the events to Zeus server asynchronously.  
+UCS agent supports to collect data from Cisco Unified Computing System managed server. First of all, UCS agent will retrieve the data of UCS objects by Distinguished name(Dn) and send them to Zeus server. After retrieving data, UCS agent will listen to UCS's asynchronous events, and submit the events to Zeus server asynchronously.  
 
 ## Dependencies
 
@@ -59,7 +59,7 @@ There are two ways to configure UCS agent, by config.py and CLI. If we don't spe
         optional arguments:
           -h, --help            show this help message and exit
           -c [UCS], --ucs [UCS]
-                                IP or host name of unified computing system manager server. (default:
+                                IP or host name of unified computing system managed server. (default:
                                 0.0.0.0)
           -u [USER], --user [USER]
                                 User name of UCS. (default: ucspe)
