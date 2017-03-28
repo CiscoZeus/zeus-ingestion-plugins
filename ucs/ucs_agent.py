@@ -224,6 +224,9 @@ class UCSAgent(object):
         self.listener.setopt(self.listener.WRITEFUNCTION,
                              self.submit_async_events)
 
+        self.listener.setopt(pycurl.SSL_VERIFYPEER, 0)
+        self.listener.setopt(pycurl.SSL_VERIFYHOST, 0)
+
         self.listener.perform()
 
     def unsubscribe_events(self):
@@ -249,7 +252,10 @@ class UCSAgent(object):
         # get arguments
         self.args = self.get_args()
         self.host = self.args.ucs
-        self.url = 'http://%s/nuova' % self.args.ucs
+        if self.args.secure == True:
+            self.url = 'https://%s/nuova' % self.args.ucs
+        else:
+            self.url = 'http://%s/nuova' % self.args.ucs
         self.user = self.args.user
         self.passwd = self.args.password
 
