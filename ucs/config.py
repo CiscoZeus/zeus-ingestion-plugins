@@ -9,5 +9,5 @@ PORT = 443
 
 LOG_LEVEL = 'INFO'
 
-ZEUS_TOKEN = "837t80wepepwvees1oylrpcef80ceteg"
+ZEUS_TOKEN = "INSERT_TOKEN_HERE"
 ZEUS_SERVER = "data04.ciscozeus.io"

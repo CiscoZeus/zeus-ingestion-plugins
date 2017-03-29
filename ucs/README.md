@@ -48,7 +48,7 @@ There are two ways to configure UCS agent, by config.py and CLI. If we don't spe
         PORT = 443
         LOG_LEVEL = 'INFO'
         
-        ZEUS_TOKEN = "abcde437t80wepepwvees1oylrpcef80"
+        ZEUS_TOKEN = <INSERT_TOKEN_HERE>
         ZEUS_SERVER = "data.ciscozeus.io"
 
 * CLI
