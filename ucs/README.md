@@ -30,8 +30,8 @@ Before using UCS agent, there are some dependencies need to be installed.
  
  There is no need to install ucs_agent, just download it and run it directly.
  
-    $ git clone https://github.com/CiscoZeus/zeus-ingestion-plugins.git
-    $ cd ucs
+    $ git clone https://github.com/CiscoZeus/zeus-ucs-agent.git
+    $ cd zeus-ucs-agent
     $ python ucs_agent.py # optional arguments specified.
 
 ## Configuration
@@ -41,43 +41,47 @@ There are two ways to configure UCS agent, by config.py and CLI. If we don't spe
 
 * Config.py
     
-        UCS = '<UCS Manager IP address in single quotes>'
-        UCS_USER = '<UCS Manager user name in single quotes>'
-        UCS_PASSWD = '<UCS Manager password in single quotes>'
+        UCS = "<UCS Manager IP address in double quotes>"
+        UCS_USER = "<UCS Manager user name in double quotes>"
+        UCS_PASSWD = "<UCS Manager password in double quotes>"
         
         IS_SECURE = True
         PORT = 443
         
-        LOG_LEVEL = 'INFO'
+        LOG_LEVEL = "INFO"
         
-        ZEUS_TOKEN = '<INSERT_TOKEN_HERE>'
+        ZEUS_TOKEN = "<INSERT_TOKEN_HERE>"
         ZEUS_SERVER = "<Zeus API URL in double quotes>"
 
 * CLI
 
         usage: ucs_agent.py [-h] [-c [UCS]] [-u [USER]] [-p [PASSWORD]] [-s [SECURE]]
-                             [-P [PORT]] [-l [LOG_LEVEL]] [-t [TOKEN]] [-z [ZEUS]]
+                            [-P [PORT]] [-l [LOG_LEVEL]] [-t [TOKEN]] [-z [ZEUS]]
         
         optional arguments:
           -h, --help            show this help message and exit
           -c [UCS], --ucs [UCS]
-                                IP or host name of unified computing system managed server. (default:
-                                0.0.0.0)
+                                IP or host name of unified computing system managed
+                                server. (default: <UCS Manager IP address in double
+                                quotes>)
           -u [USER], --user [USER]
-                                User name of UCS. (default: ucspe)
+                                User name of UCS. (default: <UCS Manager user name in
+                                double quotes>)
           -p [PASSWORD], --password [PASSWORD]
-                                Password of UCS (default: ucspe)
+                                Password of UCS (default: <UCS Manager password in
+                                double quotes>)
           -s [SECURE], --secure [SECURE]
                                 Secure of connection. (default: True)
           -P [PORT], --port [PORT]
                                 Port of TCP socket. (default: 443)
           -l [LOG_LEVEL], --log_level [LOG_LEVEL]
-                                Level of log: CRITICAL, ERROR, WARN, WARNING, INFO,
+                                Level of log: CRITICAL, ERROR, WARN, WARNING,INFO,
                                 DEBUG, NOTSET (default: INFO)
           -t [TOKEN], --token [TOKEN]
                                 Token of ZEUS API.
           -z [ZEUS], --zeus [ZEUS]
-                                IP or host name of ZEUS server. (default: 127.0.0.1)
+                                IP or host name of ZEUS server. (default: <Zeus API
+                                URL in double quotes>)
 
 
 ## Collected Data
